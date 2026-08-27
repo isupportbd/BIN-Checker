@@ -18,9 +18,20 @@ const getUserId = async (c) => {
   }
 };
 
+const getAdminId = async () => {
+  const firstUserRecord = await db.select({ id: users.id }).from(users).orderBy(users.id).limit(1);
+  return firstUserRecord.length > 0 ? firstUserRecord[0].id : null;
+};
+
 const requireAdmin = async (c, next) => {
   const userId = await getUserId(c);
-  if (userId !== 1) return c.json({ success: false, error: "Unauthorized" }, 403);
+  if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
+
+  const adminId = await getAdminId();
+  if (!adminId || adminId !== userId) {
+    return c.json({ success: false, error: "Forbidden: Admin access required" }, 403);
+  }
+  
   await next();
 };
 
@@ -194,7 +205,8 @@ app.delete("/api/users/:id", requireAdmin, async (c) => {
     const id = parseInt(c.req.param("id"));
     
     // Prevent deleting the primary admin
-    if (id === 1) {
+    const adminId = await getAdminId();
+    if (id === adminId) {
       return c.json({ success: false, error: "Cannot delete the primary admin account." }, 403);
     }
     
@@ -253,7 +265,8 @@ app.post("/api/upload", async (c) => {
   try {
     const body = await c.req.json();
     const { userId, data } = body;
-    if (userId !== tokenUserId && tokenUserId !== 1) return c.json({ success: false, error: "Forbidden" }, 403);
+    const adminId = await getAdminId();
+    if (userId !== tokenUserId && tokenUserId !== adminId) return c.json({ success: false, error: "Forbidden" }, 403);
 
     if (!userId || !data || !Array.isArray(data)) {
       return c.json({ success: false, error: "Invalid payload" }, 400);
@@ -374,8 +387,9 @@ app.get("/api/circles", async (c) => {
   if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
 
   try {
+    const adminId = await getAdminId();
     let queryConditions = undefined;
-    if (userId !== 1) {
+    if (userId !== adminId) {
       queryConditions = eq(binData.userId, userId);
     }
     
@@ -399,8 +413,9 @@ app.get("/api/police-stations", async (c) => {
   if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
 
   try {
+    const adminId = await getAdminId();
     let queryConditions = undefined;
-    if (userId !== 1) {
+    if (userId !== adminId) {
       queryConditions = eq(binData.userId, userId);
     }
     
@@ -427,7 +442,8 @@ app.get("/api/major-areas", async (c) => {
   
   try {
     let conditions = [];
-    if (userId !== 1) conditions.push(eq(binData.userId, userId));
+    const adminId = await getAdminId();
+    if (userId !== adminId) conditions.push(eq(binData.userId, userId));
     if (filterPoliceStation) conditions.push(eq(binData.policeStation, filterPoliceStation));
     
     const results = await db.select({ val: binData.majorAreaOfEconomicActivity }).from(binData).where(and(...conditions)).groupBy(binData.majorAreaOfEconomicActivity);
@@ -446,7 +462,8 @@ app.get("/api/manufacturing-areas", async (c) => {
   
   try {
     let conditions = [];
-    if (userId !== 1) conditions.push(eq(binData.userId, userId));
+    const adminId = await getAdminId();
+    if (userId !== adminId) conditions.push(eq(binData.userId, userId));
     if (filterPoliceStation) conditions.push(eq(binData.policeStation, filterPoliceStation));
     if (filterMajorArea) conditions.push(eq(binData.majorAreaOfEconomicActivity, filterMajorArea));
     
@@ -466,7 +483,8 @@ app.get("/api/service-areas", async (c) => {
   
   try {
     let conditions = [];
-    if (userId !== 1) conditions.push(eq(binData.userId, userId));
+    const adminId = await getAdminId();
+    if (userId !== adminId) conditions.push(eq(binData.userId, userId));
     if (filterPoliceStation) conditions.push(eq(binData.policeStation, filterPoliceStation));
     if (filterMajorArea) conditions.push(eq(binData.majorAreaOfEconomicActivity, filterMajorArea));
     
@@ -492,7 +510,8 @@ app.get("/api/reports/itemwise-summary", async (c) => {
 
   try {
     let conditions = [];
-    if (userId !== 1) conditions.push(eq(binData.userId, userId));
+    const adminId = await getAdminId();
+    if (userId !== adminId) conditions.push(eq(binData.userId, userId));
     if (filterCircle) conditions.push(eq(binData.circle, filterCircle));
     if (filterPoliceStation) conditions.push(eq(binData.policeStation, filterPoliceStation));
     
@@ -534,9 +553,10 @@ app.get("/api/bins", async (c) => {
 
   try {
     let conditions = [];
+    const adminId = await getAdminId();
     
     // Non-admin sees only their data
-    if (userId !== 1) {
+    if (userId !== adminId) {
       conditions.push(eq(binData.userId, userId));
     }
 
@@ -612,7 +632,8 @@ app.delete("/api/bins/circle", async (c) => {
 
   try {
     let conditions = [eq(binData.circle, circleName)];
-    if (userId !== 1) {
+    const adminId = await getAdminId();
+    if (userId !== adminId) {
       conditions.push(eq(binData.userId, userId));
     }
     
@@ -691,7 +712,8 @@ app.get("/api/reports/duplicates", async (c) => {
   
   try {
     let conditions = [];
-    if (userId !== 1) conditions.push(eq(binData.userId, userId));
+    const adminId = await getAdminId();
+    if (userId !== adminId) conditions.push(eq(binData.userId, userId));
     if (filterCircle) conditions.push(eq(binData.circle, filterCircle));
     if (filterPoliceStation) conditions.push(eq(binData.policeStation, filterPoliceStation));
     
@@ -750,13 +772,16 @@ app.get("/api/reports/duplicates", async (c) => {
   }
 });
 
-// Auto-approve the first user (ID: 1) on startup if they exist
+// Auto-approve the admin user (first user) on startup
 (async () => {
   try {
-    await db.update(users).set({ isApproved: true }).where(eq(users.id, 1));
-    console.log("Ensured User ID 1 is approved as admin.");
+    const adminId = await getAdminId();
+    if (adminId) {
+      await db.update(users).set({ isApproved: true }).where(eq(users.id, adminId));
+      console.log(`Ensured Admin (User ID ${adminId}) is approved.`);
+    }
   } catch (e) {
-    console.error("Failed to auto-approve first user:", e);
+    console.error("Failed to auto-approve admin user:", e);
   }
 })();
 
