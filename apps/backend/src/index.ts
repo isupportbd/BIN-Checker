@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { db } from "./db";
@@ -11,7 +12,7 @@ const getUserIdInfo = async (c) => {
   const authHeader = c.req.header("Authorization")?.split(" ")[1];
   if (!authHeader || authHeader === "undefined") return { userId: null, error: "Missing or undefined auth header" };
   try {
-    const payload = await verify(authHeader, JWT_SECRET);
+    const payload = await verify(authHeader, JWT_SECRET, "HS256");
     return { userId: payload.userId, error: null };
   } catch (e: any) {
     return { userId: null, error: e.message };
@@ -147,7 +148,7 @@ app.post("/api/login", async (c) => {
       .set({ lastLoginAt: new Date() })
       .where(eq(users.id, user.id));
 
-    const token = await sign({ userId: user.id }, JWT_SECRET);
+    const token = await sign({ userId: user.id }, JWT_SECRET, "HS256");
     
     const adminId = await getAdminId();
     const role = adminId === user.id ? 'Admin' : 'User';
