@@ -54,12 +54,16 @@ app.post("/api/signup", async (c) => {
 
     const hashedPassword = await Bun.password.hash(password);
 
+    // Check if this is the first user in the database
+    const userCount = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const isFirstUser = userCount[0].count === 0;
+
     await db.insert(users).values({
       name,
       email,
       passwordHash: hashedPassword,
       trxId: trxId || null,
-      isApproved: false, // Force false to prevent mass assignment
+      isApproved: isFirstUser, // The first user is automatically approved (Admin)
     });
 
     return c.json({ success: true, message: "User created successfully" });
@@ -732,6 +736,16 @@ app.get("/api/reports/duplicates", async (c) => {
     return c.json({ success: false, error: "Failed to generate report" }, 500);
   }
 });
+
+// Auto-approve the first user (ID: 1) on startup if they exist
+(async () => {
+  try {
+    await db.update(users).set({ isApproved: true }).where(eq(users.id, 1));
+    console.log("Ensured User ID 1 is approved as admin.");
+  } catch (e) {
+    console.error("Failed to auto-approve first user:", e);
+  }
+})();
 
 export default {
   port: process.env.PORT || 3002,
