@@ -216,6 +216,19 @@ app.get("/api/plans", requireAdmin, async (c) => {
   }
 });
 
+app.post("/api/plans", requireAdmin, async (c) => {
+  try {
+    const body = await c.req.json();
+    const { name, price, description } = body;
+    
+    await db.insert(plans).values({ name, price, description });
+      
+    return c.json({ success: true, message: "Plan created successfully" });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
 app.put("/api/plans/:id", requireAdmin, async (c) => {
   try {
     const id = parseInt(c.req.param("id"));

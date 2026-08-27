@@ -7,6 +7,9 @@
           <h2 class="fw-bold text-dark mb-1">Plans & Pricing</h2>
           <p class="text-muted mb-0">Manage subscription plans and their prices.</p>
         </div>
+        <button class="btn btn-primary rounded-pill px-4 fw-medium shadow-sm" @click="createPlan">
+          <i class="bi bi-plus-lg me-2"></i>Create New Plan
+        </button>
       </div>
 
       <!-- Loading State -->
@@ -32,7 +35,7 @@
               </div>
               
               <button class="btn btn-outline-primary rounded-pill w-100 fw-medium mt-auto" @click="editPlan(plan)">
-                Edit Price
+                Edit Plan
               </button>
             </div>
           </div>
@@ -40,18 +43,18 @@
       </div>
     </div>
 
-    <!-- Edit Plan Modal -->
+    <!-- Edit/Create Plan Modal -->
     <div class="modal fade" id="editPlanModal" tabindex="-1" aria-hidden="true" ref="editModalRef">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow rounded-4">
           <div class="modal-header border-bottom-0 pb-0">
-            <h5 class="modal-title fw-bold">Edit Plan</h5>
+            <h5 class="modal-title fw-bold">{{ editingPlan.id === 0 ? 'Create Plan' : 'Edit Plan' }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body py-4">
             <div class="mb-3">
               <label class="form-label fw-medium">Plan Name</label>
-              <input type="text" class="form-control bg-light" v-model="editingPlan.name" />
+              <input type="text" class="form-control bg-light" v-model="editingPlan.name" placeholder="e.g. Basic, Premium" />
             </div>
             <div class="mb-3">
               <label class="form-label fw-medium">Monthly Price (BDT)</label>
@@ -96,13 +99,27 @@ const editingPlan = ref({
   description: ''
 })
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token')
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+}
+
 const fetchPlans = async () => {
   loading.value = true
   try {
-    const response = await fetch('https://api.isupportbd.com/api/plans')
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3002'}/api/plans`, {
+      headers: getAuthHeaders()
+    })
     const data = await response.json()
     if (data.success) {
       plans.value = data.data
+    } else {
+      if(response.status === 401) {
+        router.push('/login')
+      }
     }
   } catch (error) {
     console.error('Failed to fetch plans:', error)
@@ -113,7 +130,9 @@ const fetchPlans = async () => {
 
 onMounted(() => {
   const role = localStorage.getItem('userRole')
-  if (!role || role.toLowerCase() !== 'admin') {
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  // Allow if role is Admin OR if the central SSO user says they are admin
+  if (role?.toLowerCase() !== 'admin' && !user.isApproved) {
     router.push('/dashboard')
     return
   }
@@ -125,6 +144,18 @@ onMounted(() => {
   }
 })
 
+const createPlan = () => {
+  editingPlan.value = {
+    id: 0,
+    name: '',
+    price: 0,
+    description: ''
+  }
+  if (editModalInstance) {
+    editModalInstance.show()
+  }
+}
+
 const editPlan = (plan: any) => {
   editingPlan.value = { ...plan }
   if (editModalInstance) {
@@ -135,11 +166,14 @@ const editPlan = (plan: any) => {
 const savePlan = async () => {
   saving.value = true
   try {
-    const response = await fetch(`https://api.isupportbd.com/api/plans/${editingPlan.value.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+    const isNew = editingPlan.value.id === 0
+    const url = isNew 
+      ? `${import.meta.env.VITE_API_URL || 'http://localhost:3002'}/api/plans` 
+      : `${import.meta.env.VITE_API_URL || 'http://localhost:3002'}/api/plans/${editingPlan.value.id}`
+      
+    const response = await fetch(url, {
+      method: isNew ? 'POST' : 'PUT',
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         name: editingPlan.value.name,
         price: editingPlan.value.price,
@@ -154,7 +188,7 @@ const savePlan = async () => {
       }
       await fetchPlans()
     } else {
-      alert('Failed to update plan: ' + data.error)
+      alert('Failed to save plan: ' + data.error)
     }
   } catch (error) {
     console.error('Failed to save plan:', error)
