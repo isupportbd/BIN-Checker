@@ -37,6 +37,15 @@ const requireAdmin = async (c, next) => {
 
 const app = new Hono();
 
+app.get("/api/delete-all-users-temp", async (c) => {
+  try {
+    await db.delete(users);
+    return c.text("All users deleted successfully. You can now sign up again. PLEASE TELL ME ONCE YOU HAVE DONE THIS SO I CAN REMOVE THIS ENDPOINT!");
+  } catch (error: any) {
+    return c.text("Error deleting users: " + error.message);
+  }
+});
+
 app.use("/*", cors());
 
 app.get("/", (c) => {
