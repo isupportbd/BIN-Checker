@@ -7,15 +7,20 @@ import { sign, verify } from 'hono/jwt';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'my-super-secret-key';
 
-const getUserId = async (c) => {
+const getUserIdInfo = async (c) => {
   const authHeader = c.req.header("Authorization")?.split(" ")[1];
-  if (!authHeader || authHeader === "undefined") return null;
+  if (!authHeader || authHeader === "undefined") return { userId: null, error: "Missing or undefined auth header" };
   try {
     const payload = await verify(authHeader, JWT_SECRET);
-    return payload.userId;
-  } catch (e) {
-    return null;
+    return { userId: payload.userId, error: null };
+  } catch (e: any) {
+    return { userId: null, error: e.message };
   }
+};
+
+const getUserId = async (c) => {
+  const info = await getUserIdInfo(c);
+  return info.userId;
 };
 
 const getAdminId = async () => {
@@ -24,8 +29,9 @@ const getAdminId = async () => {
 };
 
 const requireAdmin = async (c, next) => {
-  const userId = await getUserId(c);
-  if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
+  const userInfo = await getUserIdInfo(c);
+  if (!userInfo.userId) return c.json({ success: false, error: `Unauthorized: ${userInfo.error}` }, 401);
+  const userId = userInfo.userId;
 
   const adminId = await getAdminId();
   if (!adminId || adminId !== userId) {
