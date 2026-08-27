@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "types": ["bun"],
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "bin-checker-app",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:frontend": "bun --cwd apps/frontend dev",
+    "dev:backend": "bun --cwd apps/backend run dev",
+    "dev": "bun run dev:frontend & bun run dev:backend"
+  }
+}

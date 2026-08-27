@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1787562945142,
+      "tag": "0000_right_moonstone",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1787563032912,
+      "tag": "0001_fuzzy_shiver_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1787565401086,
+      "tag": "0002_free_falcon",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1787566360753,
+      "tag": "0003_rapid_matthew_murdock",
+      "breakpoints": true
+    }
+  ]
+}
