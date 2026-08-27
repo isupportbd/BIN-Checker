@@ -239,7 +239,7 @@ app.delete("/api/users/:id", requireAdmin, async (c) => {
 });
 
 // Plans APIs
-app.get("/api/plans", requireAdmin, async (c) => {
+app.get("/api/plans", async (c) => {
   try {
     const allPlans = await db.select().from(plans);
     return c.json({ success: true, data: allPlans });
