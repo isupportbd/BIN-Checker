@@ -117,9 +117,8 @@ const fetchPlans = async () => {
     if (data.success) {
       plans.value = data.data
     } else {
-      if(response.status === 401) {
-        router.push('/login')
-      }
+      console.error('API Error:', data.error);
+      alert('Error fetching plans: ' + (data.error || 'Unauthorized'));
     }
   } catch (error) {
     console.error('Failed to fetch plans:', error)
