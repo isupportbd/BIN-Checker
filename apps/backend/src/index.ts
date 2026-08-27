@@ -133,6 +133,9 @@ app.post("/api/login", async (c) => {
       .where(eq(users.id, user.id));
 
     const token = await sign({ userId: user.id }, JWT_SECRET);
+    
+    const adminId = await getAdminId();
+    const role = adminId === user.id ? 'Admin' : 'User';
 
     return c.json({
       success: true,
@@ -142,6 +145,7 @@ app.post("/api/login", async (c) => {
         name: user.name,
         email: user.email,
         isApproved: user.isApproved,
+        role: role,
       },
     });
   } catch (error: any) {

@@ -64,26 +64,8 @@ const handleLogin = async () => {
     localStorage.setItem('userId', data.user.id.toString())
     localStorage.setItem('userEmail', data.user.email)
     
-    // Determine if admin based on backend flag. Admin is the first user who got isApproved=true automatically.
-    // Or we can just let Dashboard check if they are the admin. 
-    // Wait, the backend doesn't explicitly return role 'admin'. Let's check `isApproved` and an admin list.
-    // Let's assume the first user is admin for now, but a cleaner way is verifying `adminEmail`.
-    
-    const checkAdminResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3002'}/api/check-admin`);
-    const checkAdminData = await checkAdminResponse.json();
-    
-    // If we want to detect admin role, for now we will assume if the email matches the first user, it's admin.
-    // Wait, let's just keep the old `adminEmail` check for role assignment temporarily, 
-    // or better, if the DB says they are approved, we just log them in. 
-    // I will fetch all users? No, I will just assign the role based on localStorage 'adminEmail' for now.
-    
-    let adminEmail = localStorage.getItem('adminEmail');
-    if (!adminEmail && localStorage.getItem('adminExists') === 'true') {
-      adminEmail = 'oneassociatebd@gmail.com';
-    }
-    
-    const savedAdminEmail = adminEmail ? adminEmail.trim().toLowerCase() : '';
-    if (savedAdminEmail && form.value.email.trim().toLowerCase() === savedAdminEmail) {
+    // Set userRole from backend
+    if (data.user.role === 'Admin') {
       localStorage.setItem('userRole', 'Admin');
     } else {
       localStorage.setItem('userRole', 'User');
