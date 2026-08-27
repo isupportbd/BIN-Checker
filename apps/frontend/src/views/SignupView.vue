@@ -84,7 +84,7 @@ const showConfirmPassword = ref(false)
 
 onMounted(async () => {
   try {
-    const response = await fetch('http://localhost:3002/api/check-admin')
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3002'}/api/check-admin`)
     const data = await response.json()
     if (!data.adminExists) {
       isAdminSignup.value = true
@@ -95,7 +95,7 @@ onMounted(async () => {
   
   if (!isAdminSignup.value) {
     try {
-      const planRes = await fetch('http://localhost:3002/api/plans')
+      const planRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3002'}/api/plans`)
       const planData = await planRes.json()
       if (planData.success && planData.data && planData.data.length > 0) {
         planPrice.value = planData.data[0].price
@@ -116,7 +116,7 @@ const handleSignup = async () => {
   const isApproved = isAdminSignup.value ? true : false;
   
   try {
-    const response = await fetch('http://localhost:3002/api/signup', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3002'}/api/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -41,7 +41,7 @@ const showPassword = ref(false)
 
 const handleLogin = async () => {
   try {
-    const response = await fetch('http://localhost:3002/api/login', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3002'}/api/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ const handleLogin = async () => {
     // Wait, the backend doesn't explicitly return role 'admin'. Let's check `isApproved` and an admin list.
     // Let's assume the first user is admin for now, but a cleaner way is verifying `adminEmail`.
     
-    const checkAdminResponse = await fetch('http://localhost:3002/api/check-admin');
+    const checkAdminResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3002'}/api/check-admin`);
     const checkAdminData = await checkAdminResponse.json();
     
     // If we want to detect admin role, for now we will assume if the email matches the first user, it's admin.
