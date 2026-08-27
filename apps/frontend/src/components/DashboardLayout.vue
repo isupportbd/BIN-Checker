@@ -202,7 +202,7 @@ const logout = () => {
   localStorage.removeItem('userEmail')
   localStorage.removeItem('userId')
   localStorage.removeItem('user') // Also clear the sso user
-  window.location.href = 'http://localhost:5173/login' // Redirect to Central Dashboard
+  window.location.href = '/login' // Redirect to Login
 }
 </script>
 
