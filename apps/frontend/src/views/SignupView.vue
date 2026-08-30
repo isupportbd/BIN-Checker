@@ -68,7 +68,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const isAdminSignup = ref(false)
 
-const planPrice = ref(500)
+const planPrice = ref(200)
 const planName = ref('Monthly Subscription')
 
 const form = ref({

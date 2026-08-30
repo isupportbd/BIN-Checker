@@ -168,7 +168,12 @@ const pageTitle = computed(() => {
 const fetchPendingCount = async () => {
   if (!isAdmin.value) return;
   try {
-    const response = await fetch('https://api.isupportbd.com/api/users/pending')
+    const token = localStorage.getItem('token')
+    const response = await fetch('https://api.isupportbd.com/api/users/pending', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
     const data = await response.json()
     if (data.success) {
       pendingCount.value = data.data.length

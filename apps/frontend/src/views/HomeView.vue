@@ -31,11 +31,11 @@ onMounted(async () => {
     if (planData.success && planData.data && planData.data.length > 0) {
       planPrice.value = planData.data[0].price
     } else {
-      planPrice.value = 500 // fallback
+      planPrice.value = 200 // fallback
     }
   } catch (error) {
     console.error('Error fetching plans', error)
-    planPrice.value = 500 // fallback
+    planPrice.value = 200 // fallback
   }
 })
 </script>
