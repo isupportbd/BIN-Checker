@@ -7,9 +7,12 @@
       
       <div v-if="!isAdminSignup" class="alert alert-info mb-4 text-center" role="alert">
         <strong>Subscription Plan:</strong> {{ planName }}<br/>
-        <div class="mt-2 mb-2">
+        <div class="mt-2 mb-2" v-if="planPrice !== null">
           Please <strong>Send Money</strong> via bKash to <strong>01719950891</strong>.<br/>
           Amount: {{ planPrice }} BDT + 1.8% charge ({{ Math.ceil(planPrice * 0.018) }} BDT) = <strong class="text-danger fs-5">Total Payable: {{ planPrice + Math.ceil(planPrice * 0.018) }} BDT</strong>.<br/>
+        </div>
+        <div class="mt-2 mb-2" v-else>
+          <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span> Loading plan details...
         </div>
         After sending, enter the Transaction ID below. Your account will be active once an admin approves it.
       </div>
@@ -68,7 +71,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const isAdminSignup = ref(false)
 
-const planPrice = ref(200)
+const planPrice = ref<number | null>(null)
 const planName = ref('Monthly Subscription')
 
 const form = ref({
